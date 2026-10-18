@@ -6,3 +6,4 @@
 ## System
 
 - [Cartidge format](./system/cartridge.md)
+- [BIOS boot flow](./system/bios-boot.md)
