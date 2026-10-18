@@ -15,4 +15,4 @@ docker build -t hng64kit:latest .
 
 ## License
 
-MIT License
+Code is under MIT License, documentation is under CC BY-SA 4.0.
