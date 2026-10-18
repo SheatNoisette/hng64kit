@@ -1,0 +1,22 @@
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR mips)
+
+# Dockerfile PREFIX
+set(HNG64_PREFIX "/opt/hng64" CACHE PATH "hng64kit toolchain install prefix")
+set(HNG64_TRIPLE "mips64-elf")
+
+set(CMAKE_C_COMPILER "${HNG64_PREFIX}/bin/${HNG64_TRIPLE}-gcc")
+set(CMAKE_ASM_COMPILER "${HNG64_PREFIX}/bin/${HNG64_TRIPLE}-gcc")
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+# -G0 newlib was built without a gp
+set(HNG64_FLAGS "-march=vr4300 -mtune=vr4300 -EB -G0 -mno-abicalls -fno-pic")
+set(CMAKE_C_FLAGS_INIT "${HNG64_FLAGS}")
+set(CMAKE_ASM_FLAGS_INIT "${HNG64_FLAGS}")
+
+# Only look for libs and headers in the toolchain
+set(CMAKE_FIND_ROOT_PATH "${HNG64_PREFIX}/${HNG64_TRIPLE}")
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
