@@ -55,4 +55,16 @@ RUN make install-target-newlib
 WORKDIR /
 RUN rm -rf /build
 
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends cmake make golang-go
+RUN rm -rf /var/lib/apt/lists/*
+
+ENV GOCACHE=/tmp/go-cache
+ENV GOTOOLCHAIN=local
+
+# Tools sit next to the compiler so cmake/hng64kit.cmake finds them
+COPY tools /build/tools
+RUN go -C /build/tools build -o ${PREFIX}/bin/ ./...
+RUN rm -rf /build ${GOCACHE}
+
 ENTRYPOINT ["/bin/bash"]
