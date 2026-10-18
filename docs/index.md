@@ -12,6 +12,12 @@ CC BY-SA 4.0
 - [Cartidge format](./system/cartridge.md)
 - [BIOS boot flow](./system/bios-boot.md)
 - [Sound Firmware](./system/sound-fw.md)
+- [IOMCU](./system/iomcu.md)
+
+Relevant documents:
+- NEC VR4300 User manual (U10504EJ7V0UMJ1)
+- Toshiba TLCS-870 Series T Datasheet
+- Kawatesu KL5C80A12 datasheet
 
 ## SDK
 
