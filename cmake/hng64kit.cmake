@@ -6,6 +6,7 @@ set(HNG64KIT_LIB_SOURCES
     "${HNG64KIT_DIR}/src/libhng64/core.c"
     "${HNG64KIT_DIR}/src/libhng64/irq.c"
     "${HNG64KIT_DIR}/src/libhng64/irq_entry.s"
+    "${HNG64KIT_DIR}/src/libhng64/timer.c"
 )
 
 set(HNG64KIT_MKROM "${HNG64_PREFIX}/bin/hng64kit-mkrom")
