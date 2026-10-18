@@ -1,6 +1,6 @@
     .equ STATUS_INIT, 0x34000000
     .equ VECTOR_FIRST, 0x80000000
-    .equ VECTOR_END, 0x80000200
+    .equ VECTOR_GENERAL, 0x80000180
     .equ VECTOR_STEP, 0x80
     .equ HIT_WB_INV_D, 0x15
     .equ HIT_INV_I, 0x10
@@ -27,7 +27,7 @@ _start:
     lw      $t2, 0($t0)
     lw      $t3, 4($t0)
     li      $t0, VECTOR_FIRST
-    li      $t1, VECTOR_END
+    li      $t1, VECTOR_GENERAL
 install_vector:
     sw      $t2, 0($t0)
     sw      $t3, 4($t0)
@@ -39,6 +39,15 @@ install_vector:
     addiu   $t0, $t0, VECTOR_STEP
     bne     $t0, $t1, install_vector
     nop
+
+    # Interrupts land on the general vector so it jumps to the real entry
+    la      $t1, general_vector
+    lw      $t2, 0($t1)
+    lw      $t3, 4($t1)
+    sw      $t2, 0($t0)
+    sw      $t3, 4($t0)
+    cache   HIT_WB_INV_D, 0($t0)
+    cache   HIT_INV_I, 0($t0)
 
     la      $sp, __stack_top - ARG_SAVE_AREA
     la      $gp, _gp
@@ -64,4 +73,9 @@ hang:
     # Get stuck wherever it gets copied
 exception_stub:
     b       exception_stub
+    nop
+
+    # Copied to 0x80000180, j only keeps the top 4 bits and kseg0 shares them
+general_vector:
+    j       hng_exception_entry
     nop
