@@ -12,3 +12,7 @@ CC BY-SA 4.0
 - [Cartidge format](./system/cartridge.md)
 - [BIOS boot flow](./system/bios-boot.md)
 - [Sound Firmware](./system/sound-fw.md)
+
+## SDK
+
+- [Getting started](./sdk/getting-started.md)

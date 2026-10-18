@@ -4,7 +4,9 @@ Very early homebrew SDK for the Hyper Neo Geo 64 platform.
 
 ## Documentation
 
-See [here](./docs/index.md)
+See [here](./docs/index.md) for a index.
+
+Getting started is [here](./docs/sdk/getting-started.md)
 
 ## Dockerfile
 
