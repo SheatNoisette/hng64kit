@@ -1,0 +1,37 @@
+# BIOS
+
+## Jump table
+
+Bios stage starts with a jump table of 33 slots at 0x9FC08004
+After loading a game, the BIOS copies the stage to RAM to `0x80004000-0x80007FFF`
+Then, programs call slot `n` at `0x80004000 + (*(u32 *)(0x80004000 + n) & 0x7FFF)`.
+
+
+| Slot           | Address                    | What is this                                                                                  | Used by the BIOS                     | Used by games                                                             |
+|----------------|----------------------------|-----------------------------------------------------------------------------------------------|--------------------------------------|---------------------------------------------------------------------------|
+| `0x04`         | `0x9FC08148`               | Text video init                                                                               | Yes                                  | `roadedge`, `xrally`, `bbust2`, `buriki`                                  |
+| `0x08`         | `0x9FC08200`               | System init, then clear tilemap 0                                                             | No                                   | ?                                                                         |
+| `0x0C`         | `0x9FC08228`               | Print, register calling conv (`at`, `v0`, `s7`)                                               | Yes                                  | No                                                                        |
+| `0x10`         | `0x9FC082A4`               | I/O MCU init                                                                                  | Yes                                  | No                                                                        |
+| `0x14`         | `0x9FC083CC`               | System Log Reader                                                                             | Yes, hidden mode                     | No                                                                        |
+| `0x18-0x24`    | `0x9FC08900`...            | Test ? Error reporter                                                                         | Internal                             | No                                                                        |
+| `0x28-0x44`    | `0x9FC093A4`...            | POST tests                                                                                    | POST lists                           | Through `0x5C`                                                            |
+| `0x48`         | `0x9FC09988`               | Run a test list                                                                               | Yes                                  | No                                                                        |
+| `0x4C`         | `0x9FC09300`               | System init stuff K0 = 3, TLB, 3D buffer control                                              | Yes                                  | All five                                                                  |
+| `0x50`         | `0x9FC09474`               | Print the banner                                                                              | Yes                                  | No                                                                        |
+| `0x54`         | `0x9FC09938`               | Crosshatch                                                                                    | Yes                                  | No                                                                        |
+| `0x58`         | `0x9FC08270`               | Print with C arguments `a0` string, `a1` font byte offset, `a2` tilemap offset, `a3` palette  | No                                   | `roadedge`, `xrally`, `bbust2`, `buriki`, most in `roadedge` and `bbust2` |
+| `0x5C`         | `0x9FC09A3C`               | Run one POST test `a1`, quiet flag `a2` (seems to be 1?), return error count                  | No                                   | All, always with `a2 = 1`                                                 |
+| `0x60`         | `0x9FC082F0`               | I/O MCU handshake                                                                             | Yes                                  | No                                                                        |
+| `0x64`         | `0x9FC09A84`               | DMA copy                                                                                      | Yes                                  | No                                                                        |
+| `0x68`, `0x6C` | `0x9FC09B04`, `0x9FC09B24` | Cache on, cache flush                                                                         | Internal                             | No                                                                        |
+| `0x70`         | `0x9FC098C4`               | Network dual-port test                                                                        | POST list                            | No                                                                        |
+| `0x74`         | `0x9FC09B84`               | RTC init: CF = 3 (RESET, STOP), CE = 0, CD = 0, CF = 4 (24-hour, run)                         | Yes                                  | No                                                                        |
+| `0x78`         | `0x9FC09BB0`               | Read the RTC into SRAM `0x1002-0x100E`                                                        | Internal                             | `roadedge`, `xrally`, `bbust2`                                            |
+| `0x7C`         | `0x9FC09BF8`               | Set the RTC from SRAM `0x1002-0x100E`. Sets HOLD, gives up with -1 if BUSY                    | No                                   | `roadedge`, `xrally`, `bbust2`                                            |
+| `0x80`         | `0x9FC09C50`               | Log an error                                                                                  | Yes                                  | All ?                                                                     |
+| `0x84`         | `0x9FC09CC4`               | 16-bit byte sum                                                                               | No (the Boot stage has its own copy) | ?                                                                         |
+| `0x88`         | `0`                        | Empty slot                                                                                    |                                      |                                                                           |
+| `0x8C`         | `0x9FC097D4`               | Battery SRAM test                                                                             | No                                   | ?                                                                         |
+| `0x90`         | `0x9FC099D4`               | Run a test list through the RAM copy                                                          | No                                   | ?                                                                         |
+| `0x94`         | `0x9FC08100`               | Write one TLB entry                                                                           | Internal                             | No                                                                        |

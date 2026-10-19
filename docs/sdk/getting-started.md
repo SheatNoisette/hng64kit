@@ -50,7 +50,7 @@ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/kit hng64kit:latest -c \
    && cmake --build /kit/build/empty'
 ```
 
-The ROM set lands in `build/empty/roms/roadedge`. MAME has no blank HNG64 defaultsunfortunately, so the cart poses as `roadedge` for now. The program goes in the two PR files,
+The ROM set lands in `build/empty/roms/roadedge`. MAME has no blank HNG64 defaultsunfortunately, so the cart poses as `roadedge` for now. The program goes in the two PR files, the [font](./text.md) in the four SC files,
 and every other chip is an empty file.
 
 ## Run in MAME

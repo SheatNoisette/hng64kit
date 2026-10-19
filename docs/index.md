@@ -10,9 +10,11 @@ CC BY-SA 4.0
 ## System
 
 - [Cartidge format](./system/cartridge.md)
+- [BIOS Internals](./system/bios.md)
 - [BIOS boot flow](./system/bios-boot.md)
 - [Sound Firmware](./system/sound-fw.md)
 - [IOMCU](./system/iomcu.md)
+- [Tilemaps](./system/tilemap.md)
 
 Relevant documents:
 - NEC VR4300 User manual (U10504EJ7V0UMJ1)
@@ -22,3 +24,4 @@ Relevant documents:
 ## SDK
 
 - [Getting started](./sdk/getting-started.md)
+- [Text](./sdk/text.md)
