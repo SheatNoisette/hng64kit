@@ -8,7 +8,7 @@ From the `hng64kit` folder:
 docker build -t hng64kit:latest .
 ```
 
-The image holds GCC, newlib, CMake and `hng64kit-mkrom` under `/opt/hng64`.
+The image holds GCC, newlib, CMake, `hng64kit-mkprogrom` and `hng64kit-mkrom` under `/opt/hng64`.
 
 ## Write a program
 
@@ -37,8 +37,9 @@ hng64_add_rom(empty)
 ```
 
 `hng64_add_rom` links `crt0` and the linker script and names the output
-`empty.elf`. It then runs `hng64kit-mkrom`, which fills in the cart header and
-writes the ROM set.
+`empty.elf`. It then runs `hng64kit-mkprogrom`, which fills in the cart header
+and writes `empty.prog.bin`, and `hng64kit-mkrom`, which interleaves it into the
+ROM set for MAME.
 
 `ASM` must be enabled in `project()` because `crt0` is assembly.
 

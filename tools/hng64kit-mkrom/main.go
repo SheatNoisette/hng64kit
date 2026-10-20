@@ -1,36 +1,17 @@
-// Command hng64kit-mkrom fills the cart header of an hng64kit ELF and writes it as a roadedge ROM set.
+// Command hng64kit-mkrom interleaves a program ROM and writes it as a roadedge ROM set.
 //
-// Usage: hng64kit-mkrom <program.elf> <rompath>
+// Usage: hng64kit-mkrom --program-rom <progrom.bin> --out <rompath>
 // @TODO: Not hardcoded to roadedge
 package main
 
 import (
-	"debug/elf"
-	"encoding/binary"
+	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 )
 
 const (
-	headerSize = 0x80
-
-	headerBootFlags = 0x24
-	headerLoadSrc   = 0x50
-	headerLoadDest  = 0x54
-	headerLoadWords = 0x58
-	headerEntry     = 0x5C
-	headerMagic     = 0x60
-
-	// Quiet boot by default
-	bootQuiet = 0x4000
-
-	magic = "HYPER NEOGEO64"
-
-	cartRomPhys = 0x04000000
-	physMask    = 0x1FFFFFFF
-
 	// Roadedge has a single pr pair of 32 Mbit chips
 	chipSize = 0x400000
 	romSize  = 2 * chipSize
@@ -52,59 +33,20 @@ var blankChips = []string{
 	"001sd01a.77", "001sd02a.78",
 }
 
-func findSymbol(f *elf.File, name string) (uint64, error) {
-	syms, err := f.Symbols()
+func loadProgRom(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	for _, s := range syms {
-		if s.Name == name {
-			return s.Value, nil
-		}
+	if len(data) > romSize {
+		return nil, fmt.Errorf("%s is %d bytes, the cart holds %d", path, len(data), romSize)
 	}
 
-	return 0, fmt.Errorf("symbol %s not found, is the program linked with hng64.ld?", name)
-}
-
-func loadImage(f *elf.File, start uint64) ([]byte, error) {
 	rom := make([]byte, romSize)
-
-	for _, p := range f.Progs {
-		if p.Type != elf.PT_LOAD || p.Filesz == 0 {
-			continue
-		}
-
-		offset := p.Paddr - start
-		if p.Paddr < start || offset+p.Filesz > romSize {
-			return nil, fmt.Errorf("segment at 0x%08X doesn't fit in the %d MB cart", p.Paddr, romSize>>20)
-		}
-
-		_, err := io.ReadFull(p.Open(), rom[offset:offset+p.Filesz])
-		if err != nil {
-			return nil, err
-		}
-	}
+	copy(rom, data)
 
 	return rom, nil
-}
-
-func fillHeader(rom []byte, start, end, entry uint64) error {
-	for _, b := range rom[:headerSize] {
-		if b != 0 {
-			return fmt.Errorf("header space isn't empty, crt0 must come first")
-		}
-	}
-
-	be := binary.BigEndian
-	be.PutUint16(rom[headerBootFlags:], bootQuiet)
-	be.PutUint32(rom[headerLoadSrc:], cartRomPhys)
-	be.PutUint32(rom[headerLoadDest:], uint32(start&physMask))
-	be.PutUint32(rom[headerLoadWords:], uint32((end-start)/4))
-	be.PutUint32(rom[headerEntry:], uint32(entry))
-	copy(rom[headerMagic:], magic)
-
-	return nil
 }
 
 // MAME swaps each chip's 16-bit words so the even chip holds b1 b0 and the odd one b3 b2
@@ -140,33 +82,8 @@ func writeBlankChip(path string) error {
 	return f.Close()
 }
 
-func buildRom(elfPath, rompath string) error {
-	f, err := elf.Open(elfPath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if f.Machine != elf.EM_MIPS || f.ByteOrder != binary.BigEndian {
-		return fmt.Errorf("%s isn't a big endian mips elf", elfPath)
-	}
-
-	start, err := findSymbol(f, "__image_start")
-	if err != nil {
-		return err
-	}
-
-	end, err := findSymbol(f, "__image_end")
-	if err != nil {
-		return err
-	}
-
-	rom, err := loadImage(f, start)
-	if err != nil {
-		return err
-	}
-
-	err = fillHeader(rom, start, end, f.Entry)
+func buildRom(progPath, rompath string) error {
+	rom, err := loadProgRom(progPath)
 	if err != nil {
 		return err
 	}
@@ -200,12 +117,16 @@ func buildRom(elfPath, rompath string) error {
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "usage: hng64kit-mkrom <program.elf> <rompath>")
+	progPath := flag.String("program-rom", "", "program ROM from hng64kit-mkprogrom")
+	rompath := flag.String("out", "", "rompath to write the set into")
+	flag.Parse()
+
+	if *progPath == "" || *rompath == "" || flag.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "usage: hng64kit-mkrom --program-rom <progrom.bin> --out <rompath>")
 		os.Exit(2)
 	}
 
-	err := buildRom(os.Args[1], os.Args[2])
+	err := buildRom(*progPath, *rompath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "hng64kit-mkrom:", err)
 		os.Exit(1)
