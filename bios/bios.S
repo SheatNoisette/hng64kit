@@ -55,6 +55,12 @@
     .equ DMA_BUSY, 0x800
     .equ DMA_CHUNK_WORDS, 0x10000
 
+    .equ ERASED, 0xFF
+    .equ BIOS_STAGE, 0x8000
+    # Fun fact: There's a reflasher, do fake it as BIOS v1.00
+    .equ BIOS_VERSION, 0x100
+    .equ SVC_CODE, 0x8100
+
     .set noreorder
 
     .text
@@ -239,3 +245,53 @@ jump_game:
 hang:
     b       hang
     nop
+
+################################################################################
+# BIOS Services
+################################################################################
+
+    .org BIOS_STAGE, ERASED
+bios_version:
+    .word   BIOS_VERSION
+svc_table:
+    .word   svc04_text_init
+    .word   svc08_init_clear
+    .word   svc0c_print
+    .word   svc10_mcu_init
+    .word   svc14_log_reader
+    .word   svc18_test_fill
+    .word   svc1c_test_addr
+    .word   svc20_test_stride
+    .word   svc24_report_error
+    .word   svc28_test_scroll
+    .word   svc2c_test_palette
+    .word   svc30_test_sprite
+    .word   svc34_test_3d_a
+    .word   svc38_test_3d_b
+    .word   svc3c_test_sound
+    .word   svc40_test_main_ram
+    .word   svc44_test_io_dp
+    .word   svc48_run_list
+    .word   svc4c_system_init
+    .word   svc50_title
+    .word   svc54_crosshatch
+    .word   svc58_print_font
+    .word   svc5c_run_one_ram
+    .word   svc60_mcu_handshake
+    .word   svc64_dma
+    .word   svc68_cache_on
+    .word   svc6c_cache_flush
+    .word   svc70_test_net_dp
+    .word   svc74_rtc_init
+    .word   svc78_rtc_to_sram
+    .word   svc7c_sram_to_rtc
+    .word   svc80_log_error
+    .word   svc84_byte_sum
+    # Empty on SNK BIOS
+    .word   0
+    .word   svc8c_test_sram
+    .word   svc90_run_list_ram
+    .word   svc94_tlb_write
+
+    .org SVC_CODE, ERASED
+#include "svc.S"

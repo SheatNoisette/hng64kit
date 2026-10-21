@@ -21,7 +21,7 @@ all: $(BIN)
 $(BUILD_DIR):
 	mkdir -p $@
 
-$(OBJ): bios.S | $(BUILD_DIR)
+$(OBJ): bios.S svc.S | $(BUILD_DIR)
 	$(CC) $(FLAGS) -c $< -o $@
 
 $(ELF): $(OBJ)
