@@ -2,3 +2,4 @@
 
 Basic examples:
 - empty/ : Simple empty program with a for(;;)
+- hello/ : Prints text with the BIOS
