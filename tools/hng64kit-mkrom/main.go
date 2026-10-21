@@ -1,6 +1,6 @@
 // Command hng64kit-mkrom interleaves a program ROM and writes it as a roadedge ROM set.
 //
-// Usage: hng64kit-mkrom --program-rom <progrom.bin> [--sc <sc.bin>] --out <rompath>
+// Usage: hng64kit-mkrom --program-rom <progrom.bin> [--sound <sound.bin>] [--sc <sc.bin>] --out <rompath>
 // @TODO: Not hardcoded to roadedge
 package main
 
@@ -19,6 +19,9 @@ const (
 	gameName = "roadedge"
 	oddChip  = "001pr01b.81"
 	evenChip = "001pr02b.82"
+
+	soundOffset = 0x600000
+	soundSize   = 0x200000
 
 	// Tile units, MAME hands out even ones from bank B and odd ones from bank A
 	scUnitBytes = 32
@@ -39,20 +42,35 @@ var blankChips = []string{
 	"001sd01a.77", "001sd02a.78",
 }
 
-func loadProgRom(path string) ([]byte, error) {
+func loadProgRom(path string, limit int) ([]byte, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(data) > romSize {
-		return nil, fmt.Errorf("%s is %d bytes, the cart holds %d", path, len(data), romSize)
+	if len(data) > limit {
+		return nil, fmt.Errorf("%s is %d bytes, the program space holds %d", path, len(data), limit)
 	}
 
 	rom := make([]byte, romSize)
 	copy(rom, data)
 
 	return rom, nil
+}
+
+func placeSound(rom []byte, path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	if len(data) != soundSize {
+		return fmt.Errorf("%s is %d bytes, a sound image is %d", path, len(data), soundSize)
+	}
+
+	copy(rom[soundOffset:], data)
+
+	return nil
 }
 
 // MAME swaps each chip's 16-bit words so the even chip holds b1 b0 and the odd one b3 b2
@@ -159,10 +177,22 @@ func writeBlankChip(path string) error {
 	return f.Close()
 }
 
-func buildRom(progPath, scPath, rompath string) error {
-	rom, err := loadProgRom(progPath)
+func buildRom(progPath, soundPath, scPath, rompath string) error {
+	limit := romSize
+	if soundPath != "" {
+		limit = soundOffset
+	}
+
+	rom, err := loadProgRom(progPath, limit)
 	if err != nil {
 		return err
+	}
+
+	if soundPath != "" {
+		err = placeSound(rom, soundPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	odd, even := splitRom(rom)
@@ -200,16 +230,17 @@ func buildRom(progPath, scPath, rompath string) error {
 
 func main() {
 	progPath := flag.String("program-rom", "", "program ROM from hng64kit-mkprogrom")
+	soundPath := flag.String("sound", "", "sound RAM image from hng64kit-mksound")
 	scPath := flag.String("sc", "", "SC tile image from hng64kit-mkfont")
 	rompath := flag.String("out", "", "rompath to write the set into")
 	flag.Parse()
 
 	if *progPath == "" || *rompath == "" || flag.NArg() != 0 {
-		fmt.Fprintln(os.Stderr, "usage: hng64kit-mkrom --program-rom <progrom.bin> [--sc <sc.bin>] --out <rompath>")
+		fmt.Fprintln(os.Stderr, "usage: hng64kit-mkrom --program-rom <progrom.bin> [--sound <sound.bin>] [--sc <sc.bin>] --out <rompath>")
 		os.Exit(2)
 	}
 
-	err := buildRom(*progPath, *scPath, *rompath)
+	err := buildRom(*progPath, *soundPath, *scPath, *rompath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "hng64kit-mkrom:", err)
 		os.Exit(1)
