@@ -27,34 +27,37 @@ a value to the upper half of `0xBF7021C4` (Warning: as 16 bit store).
 MCU sets status to `0x02`, reads DP `0x000` and `0x001`,
 runs the command and writes the final status to DP `0x002`.
 
-- Poll DP `0x002`, there is no interrupt for the answer (?)
+- Poll DP `0x002`, there is no interrupt for the answer apparently ?
 - After boot, kick only when the status is `0x00` or `0x01`
 - Rewrite DP `0x000` before every kick, the MCU never clears it and
   runs whatever is there
 
 ## Boot
 
-Dumped from MAME:
-- Wait for status `0x03`, then kick once with command `0x00`. Right after,
-   the status reads a stale `0x00` for a few µs, it is not done, wait for `0x04`
+From MAME, same as what `roadedge`, `buriki` and `fatfurwa` do:
+- Until the MCU is configured, only act on status `0x03` and `0x04`. DP `0x002`
+   reads `0x00` at power on and a stale `0x00` for a few us after the first kick
+- At status `0x03`, clear DP `0x002` and kick once with command `0x00`. A
+   normal boot should have already did it, so the BIOS handshake kicks at status `0x03`
 - Do not write to DP until status is `0x04`, the MCU tests the DP and
    locks up for good on any write (only a board reset recovers). It
-   takes about 6 s in MAME
+   takes about 6s in MAME
 - At status `0x04`, write `8, 8, 0, 0` to DP `0x200-0x203` (digital,
-   analog, output 1, output 2 block sizes ?) then send command `0x06`
+   analog, output 1, output 2 block sizes) then send command `0x06`. Games
+   send command `0x0A` instead
 - Send command `0x00` every frame
 
 ## Inputs
 
-After each command with status `0x00` or `0x01`, read the player words. Is big-endian
-16 bit, active high? :
+After each command with status `0x00` or `0x01`, read the player words. Big-endian
+16 bit, active high:
 | DP            | Player |
-|---            |---|
-| `0x008-0x009` | P1 |
-| `0x00A-0x00B` | P2 |
+|---------------|--------|
+| `0x008-0x009` | P1     |
+| `0x00A-0x00B` | P2     |
 
-Bits 0-7 and 15 are the stick and buttons (wiring depends on the board),
-bit 14 is Start?
+Bits 0-7 and 15 are the stick and buttons (wiring depends on the board io),
+bit 14 is Start.
 
 ## Commands
 
@@ -92,8 +95,8 @@ Read from DP `0x002`.
 | `0x04` | Boot done, send command `0x06` |
 | `0x05` | ? |
 | `0x09` | ? |
-| `0x0F` | ? |
-| `0x55`, `0xAA` | Test init pattern? |
+| `0x0F` | Error? Detail `0x01` and `0x02` refreshed the inputs, `0x05` and `0x06` mean the MCU is dead ? |
+| `0x55`, `0xAA` | Not a status, the MCU's DP test pattern during its boot |
 
 ## Misc
 
