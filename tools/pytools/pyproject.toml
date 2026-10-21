@@ -1,0 +1,9 @@
+[project]
+name = "pytools"
+version = "0.1.0"
+description = "Quick tools for working with the Hyper Neo Geo 64"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pyelftools>=0.33",
+]
