@@ -5,6 +5,7 @@ set(HNG64KIT_LDSCRIPT "${HNG64KIT_DIR}/src/hng64.ld")
 set(HNG64KIT_LIB_SOURCES
     "${HNG64KIT_DIR}/src/libhng64/bios.c"
     "${HNG64KIT_DIR}/src/libhng64/core.c"
+    "${HNG64KIT_DIR}/src/libhng64/iomcu.c"
     "${HNG64KIT_DIR}/src/libhng64/irq.c"
     "${HNG64KIT_DIR}/src/libhng64/irq_entry.s"
     "${HNG64KIT_DIR}/src/libhng64/sound.c"
