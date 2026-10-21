@@ -8,7 +8,7 @@ From the `hng64kit` folder:
 docker build -t hng64kit:latest .
 ```
 
-The image holds GCC, newlib, CMake, `hng64kit-mkprogrom` and `hng64kit-mkrom` under `/opt/hng64`.
+The image holds GCC, newlib, CMake and tools under `/opt/hng64`.
 
 ## Write a program
 
