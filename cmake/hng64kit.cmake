@@ -12,10 +12,13 @@ set(HNG64KIT_LIB_SOURCES
 
 set(HNG64KIT_MKPROGROM "${HNG64_PREFIX}/bin/hng64kit-mkprogrom")
 set(HNG64KIT_MKROM "${HNG64_PREFIX}/bin/hng64kit-mkrom")
+set(HNG64KIT_MKFONT "${HNG64_PREFIX}/bin/hng64kit-mkfont")
+set(HNG64KIT_FONT "${HNG64KIT_DIR}/tools/hng64kit-mkfont/font.txt")
 
 function(hng64_add_rom target)
     set(rom_dir "${CMAKE_CURRENT_BINARY_DIR}/roms")
     set(prog_rom "${CMAKE_CURRENT_BINARY_DIR}/${target}.prog.bin")
+    set(font_sc "${CMAKE_CURRENT_BINARY_DIR}/font.sc.bin")
     set(pr_roms "${rom_dir}/roadedge/001pr01b.81" "${rom_dir}/roadedge/001pr02b.82")
 
     target_sources(${target} PRIVATE "${HNG64KIT_CRT0}" ${HNG64KIT_LIB_SOURCES})
@@ -30,10 +33,18 @@ function(hng64_add_rom target)
         DEPENDS ${target} "${HNG64KIT_MKPROGROM}"
     )
 
+    # Every cart gets a font
+    # @TODO: Optional?
+    add_custom_command(
+        OUTPUT "${font_sc}"
+        COMMAND "${HNG64KIT_MKFONT}" --font "${HNG64KIT_FONT}" --out "${font_sc}"
+        DEPENDS "${HNG64KIT_FONT}" "${HNG64KIT_MKFONT}"
+    )
+
     add_custom_command(
         OUTPUT ${pr_roms}
-        COMMAND "${HNG64KIT_MKROM}" --program-rom "${prog_rom}" --out "${rom_dir}"
-        DEPENDS "${prog_rom}" "${HNG64KIT_MKROM}"
+        COMMAND "${HNG64KIT_MKROM}" --program-rom "${prog_rom}" --sc "${font_sc}" --out "${rom_dir}"
+        DEPENDS "${prog_rom}" "${font_sc}" "${HNG64KIT_MKROM}"
     )
 
     add_custom_target(${target}_rom ALL DEPENDS ${pr_roms})
