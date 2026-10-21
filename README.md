@@ -27,4 +27,4 @@ docker build -t hng64kit:latest .
 
 Code is under MIT License, documentation is under CC BY-SA 4.0.
 
-The font in `tools/hng64kit-mkrom/font.txt` is from funscii, under CC0 1.0.
+Use [funscii](https://github.com/jdebp/funscii) by jdebp, CC0 1.0.
