@@ -1,0 +1,5 @@
+format dos
+output raw offset=0
+option nodefaultlibs, quiet, start=_cstart_
+
+order clname VECTORS clname CODE clname DATA clname BSS clname STACK clname RESET offset=0xFFF0

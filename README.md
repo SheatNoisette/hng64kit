@@ -7,6 +7,7 @@ Very early homebrew SDK for the Hyper Neo Geo 64 platform.
 Content:
 - docs/ : Documentation and reverse engineering notes
 - bios/ : A custom BIOS written from scratch
+- soundfw/ : Custom V53A sound CPU firmware
 - src/ : Core SDK libs
 - examples/ : SDK examples
 
