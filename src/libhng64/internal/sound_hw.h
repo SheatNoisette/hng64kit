@@ -1,9 +1,11 @@
 #ifndef HNG_SOUND_HW_H
 #define HNG_SOUND_HW_H
 
+// Reach physical 0x04600000
 #define SOUND_IMAGE_PR 0xA4600000
 #define SOUND_IMAGE_SIZE 0x200000
 
+// Reach physical 0x60200000
 #define SOUND_RAM 0xE0200000
 
 #define SOUND_CPU_CTRL 0xEF000000
