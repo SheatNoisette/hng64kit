@@ -1,6 +1,12 @@
-// Command hng64kit-mkrom interleaves a program ROM and writes it as a roadedge ROM set.
+// Command hng64kit-mkrom interleaves a program ROM and writes it as a roadedge ROM set for now
 //
-// Usage: hng64kit-mkrom --program-rom <progrom.bin> [--sound <sound.bin>] [--sc <sc.bin>] --out <rompath>
+// Usage: hng64kit-mkrom --program-rom <progrom.bin>
+//
+//	[--sound <sound.bin>]
+//	[--sc <sc.bin>]
+//	[--sp <sprites.bin>]
+//	--out <rompath>
+//
 // @TODO: Not hardcoded to roadedge
 package main
 
@@ -26,14 +32,19 @@ const (
 	// Tile units, MAME hands out even ones from bank B and odd ones from bank A
 	scUnitBytes = 32
 	scSize      = 4 * chipSize
+
+	// One group of four chips, MAME loads chip c at every fourth byte from c
+	spChipCount = 4
+	spSize      = spChipCount * chipSize
 )
 
 // Lower number holds the even bytes of each bank
 var scChips = [4]string{"001sc01a.41", "001sc02a.42", "001sc03a.43", "001sc04a.44"}
 
+var spChips = [spChipCount]string{"001sp01a.53", "001sp02a.54", "001sp03a.55", "001sp04a.56"}
+
 // MAME requires all of the chips
 var blankChips = []string{
-	"001sp01a.53", "001sp02a.54", "001sp03a.55", "001sp04a.56",
 	"001tx01a.1", "001tx02a.2", "001tx03a.3", "001tx04a.4",
 	"001tx01a.5", "001tx02a.6", "001tx03a.7", "001tx04a.8",
 	"001tx01a.9", "001tx02a.10", "001tx03a.11", "001tx04a.12",
@@ -161,6 +172,66 @@ func writeSc(scPath, dir string) error {
 	return nil
 }
 
+func loadSp(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) > spSize {
+		return nil, fmt.Errorf("%s is %d bytes, the SP chips hold %d", path, len(data), spSize)
+	}
+
+	sp := make([]byte, spSize)
+	copy(sp, data)
+
+	return sp, nil
+}
+
+func splitSp(sp []byte) [spChipCount][]byte {
+	var chips [spChipCount][]byte
+
+	for i := range chips {
+		chips[i] = make([]byte, chipSize)
+	}
+
+	for k := 0; k < chipSize; k++ {
+		for c := range chips {
+			chips[c][k] = sp[k*spChipCount+c]
+		}
+	}
+
+	return chips
+}
+
+func writeSp(spPath, dir string) error {
+	if spPath == "" {
+		for _, name := range spChips {
+			err := writeBlankChip(filepath.Join(dir, name))
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	sp, err := loadSp(spPath)
+	if err != nil {
+		return err
+	}
+
+	chips := splitSp(sp)
+	for i, name := range spChips {
+		err = os.WriteFile(filepath.Join(dir, name), chips[i], 0o644)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // truncate keeps the file sparse so 116 MB of zeros costs nothing on disk
 func writeBlankChip(path string) error {
 	f, err := os.Create(path)
@@ -177,7 +248,7 @@ func writeBlankChip(path string) error {
 	return f.Close()
 }
 
-func buildRom(progPath, soundPath, scPath, rompath string) error {
+func buildRom(progPath, soundPath, scPath, spPath, rompath string) error {
 	limit := romSize
 	if soundPath != "" {
 		limit = soundOffset
@@ -218,6 +289,11 @@ func buildRom(progPath, soundPath, scPath, rompath string) error {
 		return err
 	}
 
+	err = writeSp(spPath, dir)
+	if err != nil {
+		return err
+	}
+
 	for _, name := range blankChips {
 		err = writeBlankChip(filepath.Join(dir, name))
 		if err != nil {
@@ -232,15 +308,17 @@ func main() {
 	progPath := flag.String("program-rom", "", "program ROM from hng64kit-mkprogrom")
 	soundPath := flag.String("sound", "", "sound RAM image from hng64kit-mksound")
 	scPath := flag.String("sc", "", "SC tile image from hng64kit-mkfont")
+	spPath := flag.String("sp", "", "SP sprite image from hng64kit-mkspriterom")
 	rompath := flag.String("out", "", "rompath to write the set into")
 	flag.Parse()
 
 	if *progPath == "" || *rompath == "" || flag.NArg() != 0 {
-		fmt.Fprintln(os.Stderr, "usage: hng64kit-mkrom --program-rom <progrom.bin> [--sound <sound.bin>] [--sc <sc.bin>] --out <rompath>")
+		// @TODO: It's garbage, find a better way than chain fprintln
+		fmt.Fprintln(os.Stderr, "usage: hng64kit-mkrom --program-rom <progrom.bin> [--sound <sound.bin>] [--sc <sc.bin>] [--sp <sprites.bin>] --out <rompath>")
 		os.Exit(2)
 	}
 
-	err := buildRom(*progPath, *soundPath, *scPath, *rompath)
+	err := buildRom(*progPath, *soundPath, *scPath, *spPath, *rompath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "hng64kit-mkrom:", err)
 		os.Exit(1)
