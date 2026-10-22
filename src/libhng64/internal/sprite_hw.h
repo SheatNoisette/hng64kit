@@ -1,0 +1,35 @@
+#ifndef HNG_SPRITE_HW_H
+#define HNG_SPRITE_HW_H
+
+#define SPRITE_RAM 0xC0000000
+#define SPRITE_ENTRY_WORDS 8
+
+#define SPRITE_REGS 0xC0010000
+#define SPRITE_REG_MODE 0
+#define SPRITE_REG_OFFSET 1
+#define SPRITE_REG_UNKNOWN2 2
+#define SPRITE_REG_UNKNOWN3 3
+#define SPRITE_REG_UNKNOWN4 4
+
+// Same vals as Roadedge smaller z in front, 4bpp and the two always bits ?
+#define SPRITE_MODE_4BPP 0x01860000
+#define SPRITE_UNKNOWN4_VALUE 0x000000E0
+
+#define SPRITE_ZOOM_1TO1 0x01000100
+
+#define SPRITE_POS_MASK 0xFFFF
+#define SPRITE_Y_SHIFT 16
+
+#define SPRITE_DEPTH_MASK 0x7FF
+#define SPRITE_DEPTH_SHIFT 16
+
+// Sort mode never draws this
+#define SPRITE_DEPTH_HIDDEN 0x7FF
+
+#define SPRITE_PALETTE_SHIFT 16
+#define SPRITE_TILE_MASK 0x7FFFF
+
+#define PALETTE_RAM 0xC0200000
+#define PALETTE_BLOCK_SIZE 16
+
+#endif
