@@ -10,6 +10,7 @@ set(HNG64KIT_LIB_SOURCES
     "${HNG64KIT_DIR}/src/libhng64/irq_entry.s"
     "${HNG64KIT_DIR}/src/libhng64/sound.c"
     "${HNG64KIT_DIR}/src/libhng64/sprite.c"
+    "${HNG64KIT_DIR}/src/libhng64/text.c"
     "${HNG64KIT_DIR}/src/libhng64/timer.c"
 )
 
