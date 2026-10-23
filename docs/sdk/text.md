@@ -32,6 +32,16 @@ int main(void)
 
 See `examples/hello` for an example if needed
 
+## Printing in a game
+
+```c
+#include <libhng64/text.h>
+
+hng_text_print("Hello world", 1, 2, HNG_TEXT_PALETTE_WHITE);
+```
+
+Don't forget to `hng_bios_text_init` once at boot to set tilemap 0 up
+
 ## The font
 
 `tools/hng64kit-mkfont/font.txt` holds the printable ASCII glyphs of
