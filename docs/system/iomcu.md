@@ -224,6 +224,14 @@ def run_command(cmd, param):
 
 ## Machine code error
 
+---
+
+![Fatal Fury](./imgs/machine-code-fatfurwa.png)
+
+![Road Edge](./imgs/machine-code-roadedge.png)
+
+---
+
 The Infamous(tm) "MACHINE CODE ERROR".
 
 Simply, games read DP `0x600` and compare it with their board type:
