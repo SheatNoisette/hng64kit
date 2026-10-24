@@ -78,6 +78,21 @@ $ unidasm buriki-1.15.bin -arch nec -basepc 0xB54E -skip 0xB54E -count 0x146"
 At boot the game copies 2MB image from the program ROMs to sound RAM at
 `0x60200000`, then writes `0x55AA` to `0x6F000000` to start the V53A.
 
+## Firmware
+
+The firmware is a GS-like compatible MIDI sound module with a song sequencer and
+a sound effect (SE) player.
+
+The program space is 16 banks of 64 KB and is mapped on `0x00000-0xFFFFF`
+
+| CPU address       | Bank  | Block              | Contents                    |
+|-------------------|-------|--------------------|-----------------------------|
+| `0x00000-0x0FFFF` | 0     | `$1F`              | Vectors, RAM, code          |
+| `0x10000-0x6FFFF` | 1-6   | `$03-$08`          | Instruments?                |
+| `0x70000-0x7FFFF` | 7     | `$09`              | Sound directory and SE data |
+| `0x80000-0xAFFFF` | 8-10  | `$00-$02` at first | Song window                 |
+| `0xB0000-0xFFFFF` | 11-15 | `$1E`              | Nothing                     |
+
 ### Protocol
 
 Tap into MAME:
