@@ -70,7 +70,6 @@ $ unidasm buriki-1.15.bin -arch nec -basepc 0xB54E -skip 0xB54E -count 0x146"
 - The firmware is a big beast.
 - It seems to be mostly written in assembly.
 - x86, 80186 compatible with NEC extensions
-- MIDI like? May be a glorified midi sequencer.
 - Named internally `NG64SDRV`
 
 ### How the FW is loaded?
@@ -95,18 +94,52 @@ The program space is 16 banks of 64 KB and is mapped on `0x00000-0xFFFFF`
 
 ### Protocol
 
-Tap into MAME:
-| MIPS address | Direction | V53A port |
-|--------------|-----------|-----------|
-| `0x68000000` | write     | `0x104`   |
-| `0x68000002` | write     | `0x106`   |
-| `0x68000006` | read      | `0x102`   |
-| `0x68000008` | write     | none ?    |
+To get as much information on it, it is recommended to tap MAME to each physical
+address, patch MAME to print any update to the DSP and disassemble the FW.
+
+#### Communication
+
+| MIPS address | Direction | V53A port | What it is ?                       |
+|--------------|-----------|-----------|------------------------------------|
+| `0x68000000` | write     | `0x104`   | Command                            |
+| `0x68000002` | write     | `0x106`   | Flags (Bit 6 is "command present") |
+| `0x68000004` | write     | `0x100`   | Reply or echo                      |
+| `0x68000006` | read      | `0x102`   | Status                             |
+| `0x68000008` | write     | none ?    | Does a IRQ 5                       |
+
+#### Commands
+
+| Command               | Effect                                                                                                                        |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `0001 0002 0003`      | ?                                                                                                                             |
+| `0005 0006 0007`      | Lock and stop music, SE or both. Locked commands are ignored and does nothing                                                 |
+| `0081`                | Stop the music                                                                                                                |
+| `0082`                | Stop all SE                                                                                                                   |
+| `0083`                | Stop both                                                                                                                     |
+| `0084` / `0085`       | Resume / pause the music, pause seems to sends all sound off on 16 channels                                                   |
+| `01nn`                | Play song `nn`                                                                                                                |
+| `02nn`                | Song tempo ? `nn` BPM ?                                                                                                       |
+| `05vv`                | Music volume `vv * 2`, `vv` <= `7F`                                                                                           |
+| `06vv`                | SE volume                                                                                                                     |
+| `07vv`                | Master volume, `vv` <= `7F`                                                                                                   |
+| `07rr`, `rr` ≥ `80`   | Fade speed ? Volumes move by 2 every `(rr − 0x80) * 2` ticks. `0780` is instant ?                                             |
+| `1xnn`                | Start SE `nn` of table 1, `nn` + `0x80` stops it. `x` does nothing ?                                                          |
+| `2xnn`                | Start SE `x * 0x100 + nn` of table 2, `x` < 8. `2(x+8)nn` stops it                                                            |
+| `8xnn`                | Same with `0x800` added                                                                                                       |
+| `3???`                | ?                                                                                                                             |
+| `4000-7FFF`           | Pitch bend on low 14 bits                                                                                                     |
+| `Cgvv`                | Pitch bend on the SE channels of group `g + 1`                                                                                |
+| `F000 F001 F002 F004` | Is MIDI mode, `F001` sends the music to MIDI OUT, `F004` SE, `F002` stops sequencer and plays MIDI IN, `F000` is normal mode. |
+| `F10x`                | ?                                                                                                                             |
+| `FEnn` / `FE80+nn`    | Sound test ?                                                                                                                  |
+| `FFF0`                | ?                                                                                                                             |
+| `FFF1`                | Reply music volume / 2, SE volume / 2 ?                                                                                       |
+| `FFFE`                | Reply `55AA`, handskahe                                                                                                       |
+| `FFFF`                | Restart the driver                                                                                                            |
+| others                | Invalid                                                                                                                       |
 
 
-### Commands
-
-> @TODO: Play all of the game and do a script which compiles everything
+#### Example of a communication
 
 `buriki` dump boot sequence:
 - `FFFE` (reply `55AA`)
