@@ -14,6 +14,32 @@ It is split into multiple types:
 | `VT` | Vertex / model data    | 48-bit, groups of 3 ROMs                    | 3D renderer | 24 |
 | `SD` | Sound samples          | 8-bit, sequential             | L7A1045 DSP | 4 |
 
+## Connector format
+
+This is a quick overview of the cartidge connectors, a Kicad is a better fit for
+a schematic.
+
+- The connector is made by HRS (Hirose Electric), may be End-Of-Life or custom.
+- 300 pins per connector, splitted in six rows of 25 pins, two groups of 150
+  (6 x 25) pins, separated by a screw hole (|150|Screw|150|)
+- Contact layout is double row
+- The connectors on the motherboard is the "female" variant of this connector
+- Nothing is marked on it except "300" / "HRS"
+- Connector size: 12.5mm x 140.5mm (Group 1 + Screw + Group 2)
+    - Group size: 66.5 mm
+- Size of the PCB support footprint flat rectangle: 15.8mm x 153.6mm
+- Split view, One group, looking at top: |A B|C D|
+    - A: 50 Pins - Pitch 0.5 mm
+    - B: 25 Pins - Pitch 1.7 mm
+    - C: 25 Pins - Pitch 1.7 mm
+    - D: 50 Pins - Pitch 0.5 mm
+- The spacing between the two groups, where the screw is, is 7.5 mm
+- Through hole, soldered through the PCB.
+- Two on the motherboard, labelled CON9 / CON10. They are identical.
+- Squares on the silk PCB are not necessarily ground
+- (Guess) Connected to CON9: NEO64-REN (ASIC1/ASIC2), NEO64-TRI2, NEO64-GTE
+- (Guess) Connected to CON10: NEO64-BGC, NEO64-SPR, NEO64-SCC, L7A1045
+
 ## ROM
 
 Each ROM file stores its 16-bit words little endian.
