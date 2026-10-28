@@ -243,6 +243,64 @@ The byte is the byte 0 of the IO EEPROM.
 Mismatch the game hangs on `MACHINE CODE ERROR`.
 A blank EEPROM gives 0 which no game accepts of course.
 
+## Connection
+
+From MAME and the disassembly
+
+Reminder:
+- DP: IDT71321
+- latches are the 8 input/lamp latches
+- EEPROM: BR9020F
+
+| Pin     | Port                  | Connected to                                                                                               |
+|---------|-----------------------|------------------------------------------------------------------------------------------------------------|
+| 1       | P70                   | DP address counter reset, falling edge = byte 0 of the page                                                |
+| 2       | P71                   | DP address counter clock, falling edge = next byte, wraps at 512                                           |
+| 3       | P72                   | DP A9                                                                                                      |
+| 4       | P73                   | DP A10                                                                                                     |
+| 5       | P74                   | DP direction, 1 -> write, 0 -> read                                                                        |
+| 6       | P75                   | DP `/OE` or `/WE` strobe                                                                                   |
+| 7       | P76                   | DP `/CE`                                                                                                   |
+| 8       | P77                   | MIPS IRQ 0x11, pulsed high -> low -> high                                                                |
+| 9  - 16 | P00 - P07             | DP D0-D7                                                                                                   |
+| 17      | P10 / `~INT0`         | CPU Kick (`0xBF7021C4`)                                                                                    |
+| 18      | P11                   | Pulsed low at each kick, clears the kick latch ?                                                            |
+| 19      | P12                   | Always low                                                                                                 |
+| 20      | P13                   | Latch direction, 1 write lamps, 0 read inputs                                                              |
+| 21      | P14                   | Latch strobe, low active                                                                                   |
+| 22 - 24 | P15-P17               | Latch address bits 0-2: IN0-IN7 on read, lamp latch 0-7 on write                                           |
+| 25      | P20                   | ?                                                                                                          |
+| 26      | `TEST`                | Not traced                                                                                                 |
+| 27 - 28 | P21, P22 / XTIN-XTOUT | ?                                                                                                          |
+| 29      | `RESET`               | ?                                                                                                          |
+| 30 - 31 | XIN, XOUT             | 8 MHz crystal                                                                                              |
+| 32      | VSS                   | Ground                                                                                                     |
+| 33 - 40 | P30-P37               | Latch data D0-D7, open drain, `0xFF` written before a read                                                 |
+| 41      | P40                   | EEPROM, low only during write, write enable and write disable, write control?                              |
+| 42      | P41                   | EEPROM, low during transfers, chip select ?                                                                |
+| 43      | P42 / SCK1            | EEPROM clock, fc/2^13 (~1 kbit/s)                                                                          |
+| 44      | P43 / SI1             | EEPROM data out                                                                                            |
+| 45      | P44 / SO1             | EEPROM data in                                                                                             |
+| 46 -48  | P45-P47 / SIO2        | ?                                                                                                          |
+| 49 - 53 | P50-P54               | ?                                                                                                          |
+| 54      | VASS                  | ADC ground ?                                                                                               |
+| 55      | VAREF                 | ADC reference ?                                                                                            |
+| 56 - 63 | P60-P67 / AIN0-AIN7   | AN0-AN7, analog control, see below                                                                         |
+| 64      | VDD                   | Power                                                                                                      |
+
+Analog control (AN0-AN7):
+- Driving: wheel, accelerator, brake on AN0-AN2.
+- Shooting: gun X/Y P1-P3 on AN0-AN5.
+- Fighting: none
+
+The player buttons are behind the 8 inputs latches and get reads from one byte
+at the time. 8 switches per latch:
+- Pins 22-24 (P15-P17) choose which latch shoud be read, IN0 to IN7
+- Pin 20 (P13) is held at 0 -> read
+- Pin 21 (P14) is pulled low as the strobe and the selected latch puts byte
+  on the bus
+- Pins 33-40 (P30-P37) carry the byte, 8 switches per latch. A switch reads as 0
+
 ## Misc
 
 Random bits of trivia:
