@@ -11,64 +11,88 @@ uncached. BIOS sets it up on a normal boot and `hng_core_init` does it again.
 
 ## Memory
 
-| Address      | What ? |
-|---           |---|
+| Address      | What ?                                                                     |
+|--------------|----------------------------------------------------------------------------|
 | `0xC0100000` | 4 maps of 128 x 128 32-bit entries, map `n` at `+ n * 0x10000` rows of 128 |
-| `0xC0140000` | Scroll and zoom records, ignored while zoom is off |
-| `0xC0190000` | Tilemap registers |
-| `0xC0200000` | Palette, 4096 x `0x00RRGGBB` |
-| `0xC0208000` | Mixer  |
-| `0xD0000000` | 3D control bytes (window `0xD0xxxxxx` = `0x30xxxxxx`) |
+| `0xC0140000` | Scroll and zoom records, ignored while zoom is off                         |
+| `0xC0190000` | Tilemap registers                                                          |
+| `0xC0200000` | Palette, 4096 x `0x00RRGGBB`                                               |
+| `0xC0208000` | Mixer                                                                      |
+| `0xD0000000` | 3D control bytes (window `0xD0xxxxxx` = `0x30xxxxxx`)                      |
 
 ## Entry
 
 `pppppppp ffattttt tttttttt tttttttt`
 
-| Bits  | Use |
-|---    |---|
+| Bits  | Use                                                                         |
+|-------|-----------------------------------------------------------------------------|
 | 31-24 | Palette of 4bpp: 256 palettes of 16 colors, color `n` is entry `p * 16 + n` |
-| 23-22 | Flip y, flip x |
-| 21    | Auto animate (ignored unless register `0x04` bit 16 is set) |
-| 20-0  | Tile number in 32-byte units, one 8x8 4bpp tile |
+| 23-22 | Flip y, flip x                                                              |
+| 21    | Auto animate (ignored unless register `0x04` bit 16 is set)                 |
+| 20-0  | Tile number in 32-byte units, one 8x8 4bpp tile                             |
 
 Pixel 0 is transparent.
 
 ## Registers (`0xC0190000`)
 
-| Offset | Text value | What |
-|---|---|---|
+| Offset | Text value   | What                                                                                       |
+|--------|--------------|--------------------------------------------------------------------------------------------|
 | `0x00` | `0x00070000` | Bit 16 turns zoom and scroll off, all maps are drawn 1:1 from 0,0. Bits 17-18 always set ? |
-| `0x08` | `0x08400000` | Layer 0 flags (high half), layer 1 (low half) |
-| `0x0C` | `0x00000000` | Layers 2 and 3 |
-| `0x10` | `0x00000000` | Scroll record base, layers 0 and 1 |
+| `0x08` | `0x08400000` | Layer 0 flags (high half), layer 1 (low half)                                              |
+| `0x0C` | `0x00000000` | Layers 2 and 3                                                                             |
+| `0x10` | `0x00000000` | Scroll record base, layers 0 and 1                                                         |
+| `0x14` | Untouched    | Scroll record base, layers 2 and 3                                                         |
 
 Layer flags, `mmmm dbrW FELz zzzz`:
 
-| Bits  | What it does? |
-|---    |---|
-| 15-12 | Mosaic |
-| 11    | 1 = normal, 0 = line mode |
-| 10    | 8bpp |
-| 9     | 16x16 tiles |
-| 8     | Wrap |
-| 7     | Fade enable ? |
-| 6     | Enable |
-| 5     | Mixer group ? |
+| Bits  | What it does?                   |
+|-------|---------------------------------|
+| 15-12 | Mosaic                          |
+| 11    | 1 = normal, 0 = line mode       |
+| 10    | 8bpp                            |
+| 9     | 16x16 tiles                     |
+| 8     | Wrap                            |
+| 7     | Fade enable ?                   |
+| 6     | Enable                          |
+| 5     | Mixer group ?                   |
 | 4-0   | Priority, `0x10-0x1F` behind 3D |
 
 `0x0840` is 8x8 4bpp, enabled, priority 0, the BIOS text layer.
 
+Lower priorities are drawn in front. When priorities are equal, MAME draws
+layer 3 last, placing it in front (@TODO: Verify in hardware).
+
+## Scroll
+
+Scrolling is enabled by writing `0x00060000` to register `0x00` (the value
+used by the games). Each layer then reads a 16 byte record located at
+`0xC0140000 + base * 16`, where the base comes from that layer's halfword in
+`0x10`/`0x14`. The games set bit 15 of the base.
+
+The record's words are signed 16.16 map coordinates:
+
+| Offset | Meaning                          |
+|--------|----------------------------------|
+| `+0x0` | X at the left edge of the screen |
+| `+0x4` | X at screen x 256                |
+| `+0x8` | Y at the top edge of the screen  |
+| `+0xC` | Y at line 256                    |
+
+For a 1:1 mapping at `x`, `y`, the values are `x << 16`, `(x + 256) << 16`,
+`y << 16`, and `(y + 256) << 16`. Any other distance produces zoom. Nothing
+is drawn outside the map when there's no wrap.
+
 ## Mixer
 
-| Address               | Value | Why |
-|---                    |---    |---  |
-| `0xC0208000` (16-bit) | `0x0007`     | BIOS value, unknown |
-| `0xC0208004`          | `0x00000000` | Window min x (high), min y (low) |
-| `0xC0208008`          | `0x020001C0` | Window 512 x 448, a zero blanks the screen |
-| `0xC020800C`          | `0x01404209` | BIOS value, MAME reads blend modes from bits 2 and 26 |
-| `0xC0208018`, `0xC020801C`     | `0` | Fades off |
-| `0xC0208024`          | `0`          | Palette effects off, bit 17 hides everything (MAME) |
-| `0xD0000000` (8-bit)  | `1`          | 3D layer off, backdrop is palette entry 0 (MAME) |
+| Address                    | Value        | Why                                                   |
+|----------------------------|--------------|-------------------------------------------------------|
+| `0xC0208000` (16-bit)      | `0x0007`     | BIOS value, unknown                                   |
+| `0xC0208004`               | `0x00000000` | Window min x (high), min y (low)                      |
+| `0xC0208008`               | `0x020001C0` | Window 512 x 448, a zero blanks the screen            |
+| `0xC020800C`               | `0x01404209` | BIOS value, MAME reads blend modes from bits 2 and 26 |
+| `0xC0208018`, `0xC020801C` | `0`          | Fades off                                             |
+| `0xC0208024`               | `0`          | Palette effects off, bit 17 hides everything (MAME)   |
+| `0xD0000000` (8-bit)       | `1`          | 3D layer off, backdrop is palette entry 0 (MAME)      |
 
 ## SC ROM, 8x8 4bpp
 
@@ -82,6 +106,9 @@ Tile `u`, row `y`:
 
 A 4 MB chip pair holds 512K tiles. Pixel order comes from MAME's
 `hng64_reorder` and `hng64_8x8x4_tilelayout`
+
+A 16x16 4bpp tile `t` is the 8x8 tiles `t` to `t + 3`: top left, top right,
+bottom left, bottom right. `t` is a multiple of 4 (`hng64_16x16x4_tilelayout`)
 
 ## BIOS font
 
